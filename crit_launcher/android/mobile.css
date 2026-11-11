@@ -78,10 +78,16 @@ html.crit-android .top-right { gap: 8px; top: 0; }
 }
 
 /* landscape phones: keep the compact left rail but tighten it */
-@media (orientation: landscape) and (max-height: 520px) {
+@media (orientation: landscape) and (max-height: 640px) {
   html.crit-android #topbar { height: 46px; }
   html.crit-android #content { padding: 10px 14px; }
   html.crit-android #sidebar-inner { padding: 8px 6px 0; }
   html.crit-android #brand { padding-bottom: 8px; }
   html.crit-android .nav-item { min-height: 40px; }
 }
+
+/* fullscreen: fill the whole screen and stay clear of the camera notch */
+html.crit-android, html.crit-android body { height: 100%; margin: 0; }
+html.crit-android { box-sizing: border-box; background: #0b0c0e;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+html.crit-android #app { height: 100%; }

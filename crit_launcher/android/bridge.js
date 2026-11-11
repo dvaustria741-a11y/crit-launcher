@@ -30,7 +30,12 @@
   document.documentElement.classList.add("crit-android");
   var meta = document.querySelector('meta[name="viewport"]');
   if (!meta) { meta = document.createElement("meta"); meta.name = "viewport"; document.head.appendChild(meta); }
-  meta.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no";
+  // The app is landscape-only. A 1120px-wide layout viewport scales the page down to phone size, so it
+  // looks like the desktop launcher fitted to the screen instead of oversized. viewport-fit=cover lets it
+  // reach under the camera notch; mobile.css pads by env(safe-area-inset-*).
+  var landscape = window.screen.width >= window.screen.height;
+  meta.content = (landscape ? "width=1120" : "width=device-width") +
+    ", initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
   window.addEventListener("load", function () {
     window.dispatchEvent(new Event("pywebviewready"));
   });

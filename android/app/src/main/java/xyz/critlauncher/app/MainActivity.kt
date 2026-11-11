@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -130,6 +132,12 @@ class MainActivity : Activity() {
             addJavascriptInterface(PageBridge(), "CritBridge")
         }
         setContentView(webView)
+        if (Build.VERSION.SDK_INT >= 28) {
+            val lp = window.attributes
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            window.attributes = lp
+        }
+        enterImmersive()
         pool.execute {
             try {
                 val resDir = File(filesDir, "crit_res")
@@ -153,6 +161,19 @@ class MainActivity : Activity() {
                 }
             }
         }
+    }
+
+    private fun enterImmersive() {
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) enterImmersive()
     }
 
     /** Copy bundled index/artwork out of the APK, refreshed whenever the app is updated. */
