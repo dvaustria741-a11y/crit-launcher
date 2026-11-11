@@ -2,11 +2,8 @@ __pycache__/
 *.pyc
 launcher_data/
 build/
-build-linux/
 dist/
-dist-linux/
 output/
-*.spec
 
 # Android (synced from the repo root by android/app/build.gradle.kts)
 android/.gradle/

@@ -40,7 +40,7 @@ class LayoutTests(unittest.TestCase):
 
     def test_pages_only_call_existing_methods(self):
         have = set(public_api())
-        for page in ("index.html", "index.linux.html"):
+        for page in ("index.html",):
             text = (ROOT / page).read_text(encoding="utf-8")
             used = set(re.findall(r'callApi\(\s*["\']([A-Za-z_0-9]+)["\']', text))
             used |= set(re.findall(r"pywebview\.api\.([A-Za-z_0-9]+)", text))

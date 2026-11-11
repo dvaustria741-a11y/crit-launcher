@@ -80,7 +80,7 @@ val syncCritSources = tasks.register<Sync>("syncCritSources") {
     into(layout.projectDirectory.dir("src/main/python"))
 }
 val syncCritResources = tasks.register<Sync>("syncCritResources") {
-    from(File(repoRoot, "index.linux.html"))
+    from(File(repoRoot, "index.html"))
     from(File(repoRoot, "assets")) { into("assets") }
     into(layout.projectDirectory.dir("src/main/assets/crit_res"))
 }

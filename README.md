@@ -1,6 +1,10 @@
 # Crit Launcher
 
-Crit Launcher is a open source minecraft launcher written in python and html
+Crit Launcher is an open source Minecraft launcher for Android, written in Python and HTML.
+
+The page and Python backend run inside the app (WebView + Chaquopy). The game runs on the engine from
+[ZalithLauncher2](https://github.com/ZalithLauncher/ZalithLauncher2), so the Android build is GPLv3
+(see [android/NOTICE-GPL.md](android/NOTICE-GPL.md)). Zalith's own UI is not used.
 
 <details>
 <summary>notes</summary>
@@ -16,22 +20,12 @@ the themes which aim to replicate other launchers are completely custom built, n
 </details>
 
 ## project layout
-the backend is the `crit_launcher/` package, one folder per feature. see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for where everything lives and how to debug it.
+- `crit_launcher/`: the Python backend, one folder per feature. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- `crit_launcher/android/`: page-to-Python bridge, mobile CSS, game hand-off.
+- `index.html`: the launcher page.
+- `android/`: the Kotlin app, the game screen and the Zalith engine glue. See [android/README.md](android/README.md).
 
-run from source: `python crit.py` (needs `pywebview`)
 tests: `python -m unittest discover -s tests`
 
-## compilation
-first install the source code (the `icon.ico` is already in the folder)
-then run
-```
-pyinstaller --onefile --windowed --name crit --icon=icon.ico --add-data "index.html;." crit.py
-```
-setup:
-[innosetup](https://jrsoftware.org/isinfo.php)
-then run `packaging/windows/critsetup.iss`
-
-linux: run `packaging/linux/build-appimage.sh` (see `packaging/linux/README.md`)
-
-
-<sub>this readme is valid as of v1.7.1</sub>
+## building
+Push to `main`. GitHub Actions ("Android build") builds one APK with armeabi-v7a and arm64-v8a and publishes it under Releases.

@@ -1,7 +1,7 @@
 # Crit Launcher for Android
 
 A Kotlin WebView shell (`app/`) that runs the existing Python backend in-process with
-[Chaquopy](https://chaquo.com/chaquopy/) and shows `index.linux.html`. The pywebview bridge is replaced by
+[Chaquopy](https://chaquo.com/chaquopy/) and shows `index.html`. The pywebview bridge is replaced by
 `crit_launcher/android/` (`entry.py` + `bridge.js`).
 
 * ABIs: `armeabi-v7a` and `arm64-v8a` (one APK holds both).
