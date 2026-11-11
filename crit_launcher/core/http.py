@@ -1,8 +1,11 @@
 """HTTP helpers shared by every feature (JSON/text/bytes fetches, downloads, authenticated calls)."""
 
+import http.client
 import json
 import os
+import threading
 import time
+import urllib.parse
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -79,6 +82,72 @@ def http_download(url: str, dest: Path, expected_size=None, expected_sha1=None,
         if file_sha1(tmp) != expected_sha1:
             tmp.unlink(missing_ok=True)
             raise IOError(f"Checksum mismatch for {dest.name}")
+    os.replace(tmp, dest)
+
+
+_conns = threading.local()
+
+
+def _pooled_conn(scheme: str, netloc: str):
+    pool = getattr(_conns, "pool", None)
+    if pool is None:
+        pool = _conns.pool = {}
+    conn = pool.get((scheme, netloc))
+    if conn is None:
+        cls = http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
+        conn = pool[(scheme, netloc)] = cls(netloc, timeout=30)
+    return conn
+
+
+def _drop_conn(scheme: str, netloc: str):
+    conn = getattr(_conns, "pool", {}).pop((scheme, netloc), None)
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def http_download_fast(url: str, dest: Path, expected_size=None, expected_sha1=None,
+                       progress_cb=None, chunk_size: int = 262144):
+    """Like http_download, but each worker thread keeps its connection open, so thousands of small files
+    (game assets) do not each pay for a new TLS handshake. Redirects fall back to http_download."""
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme not in ("http", "https"):
+        return http_download(url, dest, expected_size, expected_sha1, progress_cb)
+    path = parts.path + ("?" + parts.query if parts.query else "")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dest.with_name(dest.name + ".part")
+    last = None
+    for _ in range(2):
+        conn = _pooled_conn(parts.scheme, parts.netloc)
+        try:
+            conn.request("GET", path, headers={"User-Agent": USER_AGENT, "Accept-Encoding": "identity"})
+            resp = conn.getresponse()
+            if 300 <= resp.status < 400:
+                resp.read()
+                return http_download(url, dest, expected_size, expected_sha1, progress_cb)
+            if resp.status != 200:
+                resp.read()
+                raise IOError(f"HTTP {resp.status} for {url}")
+            with open(tmp, "wb") as f:
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    if progress_cb:
+                        progress_cb(len(chunk))
+            break
+        except (http.client.HTTPException, ConnectionError, TimeoutError, OSError) as exc:
+            # a kept-alive connection may have been closed by the server: reconnect once
+            last = exc
+            _drop_conn(parts.scheme, parts.netloc)
+    else:
+        raise last
+    if expected_sha1 and file_sha1(tmp) != expected_sha1:
+        tmp.unlink(missing_ok=True)
+        raise IOError(f"Checksum mismatch for {dest.name}")
     os.replace(tmp, dest)
 
 

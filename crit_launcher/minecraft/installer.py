@@ -11,6 +11,7 @@ import zipfile
 from pathlib import Path
 
 from ..config.paths import (
+    IS_ANDROID,
     ASSET_INDEXES_DIR,
     ASSET_OBJECTS_DIR,
     DATA_DIR,
@@ -136,7 +137,9 @@ class Installer:
             vanilla_json = meta_cache.get_version_json(self.version_id, version_entry["url"])
 
             java_info = vanilla_json.get("javaVersion") or dict(DEFAULT_JAVA_INFO)
-            java_path = resolve_java(java_info, allow_download=True, tracker=tracker)
+            # Android: the bundled engine supplies Java; never download a desktop runtime.
+            java_path = "android-engine" if IS_ANDROID else resolve_java(
+                java_info, allow_download=True, tracker=tracker)
             if not java_path:
                 raise RuntimeError("Could not find or download a suitable Java runtime.")
 
@@ -161,6 +164,10 @@ class Installer:
                 plan = self._plan_vanilla(vanilla_json)
 
             cp_entries, native_entries = collect_library_entries(plan["libraries"])
+            if IS_ANDROID:
+                # the engine ships its own ARM LWJGL; the desktop x86 jars would only be thrown away
+                cp_entries = [e for e in cp_entries if not e["path"].startswith("org/lwjgl/")]
+                native_entries = [e for e in native_entries if not e["path"].startswith("org/lwjgl/")]
 
             client_dl = vanilla_json.get("downloads", {}).get("client", {})
             client_entry = {
@@ -193,15 +200,20 @@ class Installer:
             total += sum(int(e.get("size") or 0) for e, _ in asset_items)
             tracker.reset(total)
 
-            tracker.set_task("Downloading client", force=True)
-            download_all([(client_entry, VERSIONS_DIR)], tracker)
             client_path = VERSIONS_DIR / client_entry["path"]
+            if IS_ANDROID:
+                # one pool for everything: client, libraries and assets download side by side
+                tracker.set_task("Downloading game files", force=True)
+                download_all([(client_entry, VERSIONS_DIR)] + lib_items + asset_items, tracker, workers=32)
+            else:
+                tracker.set_task("Downloading client", force=True)
+                download_all([(client_entry, VERSIONS_DIR)], tracker)
 
-            tracker.set_task("Downloading libraries", force=True)
-            download_all(lib_items, tracker)
+                tracker.set_task("Downloading libraries", force=True)
+                download_all(lib_items, tracker)
 
-            tracker.set_task("Downloading assets", force=True)
-            download_all(asset_items, tracker, workers=16)
+                tracker.set_task("Downloading assets", force=True)
+                download_all(asset_items, tracker, workers=16)
 
             post = plan.get("post")
             if post:

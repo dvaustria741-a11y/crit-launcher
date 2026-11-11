@@ -9,7 +9,8 @@ from concurrent.futures import as_completed
 from pathlib import Path
 
 from ..core.fsutil import file_is_valid, is_within
-from ..core.http import http_download
+from ..config.paths import IS_ANDROID
+from ..core.http import http_download, http_download_fast
 from ..core.logs import log_exception
 from ..core.system import current_arch, current_os_name
 from .constants import LIBRARIES_BASE_URL
@@ -134,7 +135,8 @@ def ensure_file(entry: dict, dest_root: Path, tracker, retries: int = 3):
     last = None
     for attempt in range(retries):
         try:
-            http_download(entry["url"], dest, entry.get("size"), entry.get("sha1"), cb)
+            fetch = http_download_fast if (IS_ANDROID and attempt == 0) else http_download
+            fetch(entry["url"], dest, entry.get("size"), entry.get("sha1"), cb)
             return dest
         except Exception as exc:
             last = exc
