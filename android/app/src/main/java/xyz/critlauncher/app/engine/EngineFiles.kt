@@ -11,10 +11,11 @@ import java.io.IOException
 import java.io.InputStream
 
 /**
- * Unpacks the engine pieces that extract-engine.sh put into assets/engine/:
- *   assets/engine/app_runtime/lwjgl/<v>/*  -> files/engine/components/lwjgl/<v>/
- *   assets/engine/components/*             -> files/engine/components/
- *   assets/engine/runtimes/jre-<n>/*.tar.xz -> files/engine/runtimes/Internal-<n>/   (on demand)
+ * Unpacks the engine pieces that extract-engine.sh put into assets/engine/ (no slash-star in this
+ * comment: Kotlin comments nest, so that would open a second comment and break the build):
+ *   app_runtime/lwjgl/VERSION -> files/engine/components/lwjgl/VERSION
+ *   components                -> files/engine/components
+ *   runtimes/jre-N (tar.xz)   -> files/engine/runtimes/Internal-N (on demand)
  */
 object EngineFiles {
     private const val ASSET_ROOT = "engine"
