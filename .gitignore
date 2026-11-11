@@ -7,3 +7,11 @@ dist/
 dist-linux/
 output/
 *.spec
+
+# Android (synced from the repo root by android/app/build.gradle.kts)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/python/
+android/app/src/main/assets/crit_res/

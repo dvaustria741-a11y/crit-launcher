@@ -5,7 +5,7 @@ import shutil
 import threading
 from pathlib import Path
 
-from ..config.paths import IS_LINUX, PAGE_DIR, RESOURCE_DIR
+from ..config.paths import IS_ANDROID, IS_LINUX, PAGE_DIR, RESOURCE_DIR
 from ..core.logs import log_exception
 from .assets import (
     HOME_BG_ASSETS,
@@ -51,7 +51,7 @@ def ensure_home_assets() -> dict:
 def prepare_page() -> Path:
     """Return the index.html to load. Compiled builds get a fresh copy in PAGE_DIR so assets/ sits beside it."""
     src = RESOURCE_DIR / "index.html"
-    if IS_LINUX and (RESOURCE_DIR / "index.linux.html").is_file():
+    if (IS_LINUX or IS_ANDROID) and (RESOURCE_DIR / "index.linux.html").is_file():
         src = RESOURCE_DIR / "index.linux.html"
     if PAGE_DIR == RESOURCE_DIR:
         return src

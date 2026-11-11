@@ -1,0 +1,39 @@
+name: Android build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Chaquopy needs a host Python (3.8-3.13) to resolve pip packages at build time
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Run backend tests
+        run: python -m unittest discover -s tests
+
+      - name: Build APK (armeabi-v7a + arm64-v8a)
+        working-directory: android
+        run: gradle assembleDebug --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crit-launcher-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk

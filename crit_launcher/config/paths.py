@@ -11,8 +11,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTRY_SCRIPT = PROJECT_ROOT / "crit.py"
 
 
+# Android (Chaquopy): the Kotlin shell sets CRIT_LAUNCHER_DATA / CRIT_RESOURCE_DIR before import.
+IS_ANDROID = "ANDROID_ROOT" in os.environ and "CRIT_LAUNCHER_DATA" in os.environ
+
+
 def _resource_dir() -> Path:
     """Folder holding index.html and assets/ (the PyInstaller bundle when frozen)."""
+    if IS_ANDROID and os.environ.get("CRIT_RESOURCE_DIR"):
+        return Path(os.environ["CRIT_RESOURCE_DIR"])
     if getattr(sys, "frozen", False):
         return Path(sys._MEIPASS)
     return PROJECT_ROOT
@@ -27,7 +33,7 @@ def _app_dir() -> Path:
 RESOURCE_DIR = _resource_dir()
 APP_DIR = _app_dir()
 
-IS_LINUX = sys.platform.startswith("linux")
+IS_LINUX = sys.platform.startswith("linux") and not IS_ANDROID
 
 
 def _default_data_dir() -> Path:
@@ -54,7 +60,7 @@ INSTANCE_ICONS_DIR = DATA_DIR / "instance_icons"
 SERVERS_DIR = DATA_DIR / "servers"
 
 # Compiled builds unpack index.html into DATA_DIR/web so assets/ can sit beside it.
-PAGE_DIR = DATA_DIR / "web" if getattr(sys, "frozen", False) else RESOURCE_DIR
+PAGE_DIR = DATA_DIR / "web" if (getattr(sys, "frozen", False) or IS_ANDROID) else RESOURCE_DIR
 
 ACCOUNTS_FILE = DATA_DIR / "accounts.json"
 SETTINGS_FILE = DATA_DIR / "settings.json"
