@@ -13,6 +13,8 @@ jobs:
   build:
     needs: engine
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to publish each build as a GitHub Release
     steps:
       - uses: actions/checkout@v4
 
@@ -44,6 +46,41 @@ jobs:
           bash android/engine/extract-engine.sh engine-apks/*/*.apk
           du -sh android/app/src/main/jniLibs android/app/src/main/assets/engine
 
+      # One persistent key signs every build, so each APK installs over the previous one without uninstalling.
+      # It is created on the first run and kept in the Actions cache (not in the repo). To make it permanent, add
+      # repo secrets CRIT_KEYSTORE_B64 (base64 of a .jks, alias "crit") and CRIT_KEYSTORE_PASSWORD.
+      - name: Restore signing key
+        uses: actions/cache@v4
+        with:
+          path: signing
+          key: crit-signing-key-v1
+
+      - name: Prepare signing key
+        env:
+          SECRET_B64: ${{ secrets.CRIT_KEYSTORE_B64 }}
+          SECRET_PASS: ${{ secrets.CRIT_KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p signing
+          if [ -n "$SECRET_B64" ]; then
+            echo "$SECRET_B64" | base64 -d > signing/crit.jks
+            pass="$SECRET_PASS"
+          else
+            if [ ! -f signing/crit.jks ]; then
+              pass=$(openssl rand -hex 16)
+              keytool -genkeypair -keystore signing/crit.jks -alias crit -keyalg RSA -keysize 2048 \
+                -validity 10000 -storepass "$pass" -keypass "$pass" -dname "CN=Crit Launcher Android, O=Zenkai"
+              echo "$pass" > signing/pass.txt
+              echo "::warning::Created a new signing key. This build needs one uninstall of the old app; later builds update in place."
+            fi
+            pass=$(cat signing/pass.txt)
+          fi
+          echo "::add-mask::$pass"
+          {
+            echo "CRIT_KEYSTORE=$PWD/signing/crit.jks"
+            echo "CRIT_KEYSTORE_PASSWORD=$pass"
+            echo "CRIT_KEY_ALIAS=crit"
+          } >> "$GITHUB_ENV"
+
       - name: Build APK (armeabi-v7a + arm64-v8a)
         working-directory: android
         run: gradle assembleDebug --stacktrace
@@ -52,3 +89,16 @@ jobs:
         with:
           name: crit-launcher-android-debug
           path: android/app/build/outputs/apk/debug/*.apk
+
+      # Every build stays downloadable under Releases (build-<number>), so older versions are never lost.
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk=$(ls android/app/build/outputs/apk/debug/*.apk | head -1)
+          name="CritLauncher-build${{ github.run_number }}-${GITHUB_SHA::7}.apk"
+          cp "$apk" "$name"
+          gh release create "build-${{ github.run_number }}" "$name" \
+            --title "Build ${{ github.run_number }}" \
+            --notes "Commit ${GITHUB_SHA::7}. $(git log -1 --pretty=%s)" \
+            --prerelease --target "$GITHUB_SHA"

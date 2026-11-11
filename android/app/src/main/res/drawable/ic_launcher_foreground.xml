@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder art. To use the real icon: add ic_launcher_foreground.png (432x432) here and delete this file. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#3be585" android:pathData="M54,30 L78,54 L54,78 L30,54 Z" />
+</vector>

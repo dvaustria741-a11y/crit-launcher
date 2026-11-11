@@ -12,17 +12,35 @@ android {
         applicationId = "xyz.critlauncher.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.7.1-android"
+        // every CI build gets a higher number so it installs over the previous one
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionName = "1.7.1-android" + (System.getenv("GITHUB_RUN_NUMBER")?.let { "+$it" } ?: "")
         ndk {
             // 32-bit and 64-bit ARM phones in one APK
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
     }
 
+    // CI passes a persistent signing key through the environment (see .github/workflows/android.yml) so every
+    // build is signed the same way and can be installed as an update. Without it, Gradle's debug key is used.
+    val critKeystore = System.getenv("CRIT_KEYSTORE")
+    if (critKeystore != null) {
+        signingConfigs {
+            create("crit") {
+                storeFile = file(critKeystore)
+                storePassword = System.getenv("CRIT_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("CRIT_KEY_ALIAS") ?: "crit"
+                keyPassword = System.getenv("CRIT_KEYSTORE_PASSWORD")
+            }
+        }
+    }
     buildTypes {
+        debug {
+            if (critKeystore != null) signingConfig = signingConfigs.getByName("crit")
+        }
         release {
             isMinifyEnabled = false
+            if (critKeystore != null) signingConfig = signingConfigs.getByName("crit")
         }
     }
     compileOptions {

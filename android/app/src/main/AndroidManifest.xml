@@ -7,6 +7,8 @@
 
     <application
         android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:label="Crit Launcher"
         android:extractNativeLibs="true"
         android:largeHeap="true"
@@ -26,6 +28,8 @@
         <!-- Own process: the game's JVM lives here and may exit or be killed without taking the launcher down. -->
         <activity
             android:name=".GameActivity"
+            android:icon="@mipmap/ic_game"
+            android:label="Crit Game"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
             android:exported="false"
             android:launchMode="singleTask"

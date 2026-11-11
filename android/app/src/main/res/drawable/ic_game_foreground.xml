@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder art. To use the real icon: add ic_game_foreground.png (432x432) here and delete this file. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#3be585" android:pathData="M36,36 L72,36 L72,72 L36,72 Z" />
+</vector>
