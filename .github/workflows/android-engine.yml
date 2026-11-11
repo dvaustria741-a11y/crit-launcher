@@ -65,4 +65,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: zalith-engine-${{ matrix.arch }}
+          retention-days: 1   # build input only; this is Zalith's own app, not Crit - do not install it
           path: zalith/ZalithLauncher/build/outputs/apk/debug/*.apk
