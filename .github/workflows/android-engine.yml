@@ -5,13 +5,10 @@ name: Android engine (Zalith)
 # Crit's app consumes the result via android/engine/extract-engine.sh.
 # ZalithLauncher2 is GPLv3: see android/NOTICE-GPL.md.
 
+# Reused by android.yml (workflow_call); can also be run by hand to check the engine builds on its own.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - android/engine/**
-      - .github/workflows/android-engine.yml
+  workflow_call:
 
 jobs:
   engine:

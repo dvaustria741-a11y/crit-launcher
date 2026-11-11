@@ -55,6 +55,9 @@ def start(host, data_dir, resource_dir):
     from ..ui.page import prepare_page, start_asset_download
     from ..app.facade import API
 
+    from . import game as android_game
+    android_game.set_host(host)
+
     init_environment()
     start_asset_download()
     api = API()
@@ -69,6 +72,12 @@ def start(host, data_dir, resource_dir):
 
     page = prepare_page()
     return _inject_bridge(str(page))
+
+
+def game_exited(code):
+    """Called by the Kotlin shell when the game process ends."""
+    from . import game as android_game
+    android_game.game_exited(code)
 
 
 def _open_url(host, url):

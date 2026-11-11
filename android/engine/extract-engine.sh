@@ -7,7 +7,8 @@ app="$here/../app/src/main"
 tmp="$(mktemp -d)"
 for apk in "$@"; do
   d="$tmp/$(basename "$apk" .apk)"
-  unzip -q "$apk" 'lib/*' 'assets/runtimes/*' 'assets/app_runtime/*' 'assets/components/*' -d "$d"
+  # unzip exits 11 when a pattern matches nothing; that is fine (not every APK has every folder)
+  unzip -q "$apk" 'lib/*' 'assets/runtimes/*' 'assets/app_runtime/*' 'assets/components/*' -d "$d" || [ $? -eq 11 ]
   mkdir -p "$app/jniLibs" "$app/assets/engine"
   cp -r "$d"/lib/* "$app/jniLibs/"          # lib/<abi>/*.so
   cp -r "$d"/assets/* "$app/assets/engine/"  # runtimes, app_runtime, components

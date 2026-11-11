@@ -8,6 +8,7 @@
     <application
         android:allowBackup="false"
         android:label="Crit Launcher"
+        android:extractNativeLibs="true"
         android:largeHeap="true"
         android:theme="@style/Theme.Crit"
         android:usesCleartextTraffic="false">
@@ -22,5 +23,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Own process: the game's JVM lives here and may exit or be killed without taking the launcher down. -->
+        <activity
+            android:name=".GameActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:process=":game"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Crit"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 </manifest>

@@ -13,6 +13,7 @@ from ..config.settings import settings_store
 from ..core.logs import log_exception
 from ..core.memory import clamp_memory_mb
 from ..core.progress import ProgressTracker
+from ..config.paths import IS_ANDROID
 from ..core.system import CREATE_NO_WINDOW
 from ..horizon.sounds import horizon_sounds_pending
 from ..instances.playtime import _bump_playtime
@@ -113,7 +114,8 @@ class LaunchApi:
                 meta = read_instance_meta(instance_name) or meta
 
             info = java_info_from_meta(meta)
-            java_path = resolve_java(info, allow_download=False)
+            # Android: the bundled engine supplies Java, nothing to find or download.
+            java_path = "android-engine" if IS_ANDROID else resolve_java(info, allow_download=False)
             if not java_path:
                 self.emit("installStarted", {
                     "instance": instance_name,
@@ -142,7 +144,8 @@ class LaunchApi:
 
             settings = settings_store.read()
             memory_mb = clamp_memory_mb(settings.get("memory_mb", 2048))
-            command = build_launch_command(meta, account, memory_mb, console_java(java_path), settings)
+            java_exe = java_path if IS_ANDROID else console_java(java_path)
+            command = build_launch_command(meta, account, memory_mb, java_exe, settings)
             game_dir = instance_game_dir(instance_name)
             ensure_game_layout(instance_name, meta.get("loader", "vanilla"))
 
@@ -151,15 +154,21 @@ class LaunchApi:
             logging.info("Launching %s: %s", instance_name, " ".join(command)[:2500])
 
             try:
-                proc = subprocess.Popen(
-                    command,
-                    cwd=str(game_dir),
-                    stdin=subprocess.DEVNULL,
-                    stdout=log_file,
-                    stderr=subprocess.STDOUT,
-                    creationflags=CREATE_NO_WINDOW,
-                    shell=False,
-                )
+                if IS_ANDROID:
+                    from ..android import game as android_game
+                    proc = android_game.start(
+                        instance_name, command, game_dir, log_path,
+                        java_info_from_meta(meta)["majorVersion"])
+                else:
+                    proc = subprocess.Popen(
+                        command,
+                        cwd=str(game_dir),
+                        stdin=subprocess.DEVNULL,
+                        stdout=log_file,
+                        stderr=subprocess.STDOUT,
+                        creationflags=CREATE_NO_WINDOW,
+                        shell=False,
+                    )
             except Exception:
                 log_file.close()
                 raise

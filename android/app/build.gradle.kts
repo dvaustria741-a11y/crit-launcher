@@ -30,6 +30,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+
+    // The engine's JRE packs are already xz-compressed; the JVM and native bridges are loaded by path, so the
+    // .so files must be extracted to the app's native library dir.
+    androidResources { noCompress += listOf("xz", "jar") }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+            pickFirsts += "**/libc++_shared.so"
+        }
+    }
 }
 
 chaquopy {
@@ -64,4 +74,7 @@ tasks.configureEach {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+    // unpacking the engine's .tar.xz JRE packs
+    implementation("org.apache.commons:commons-compress:1.26.2")
+    implementation("org.tukaani:xz:1.9")
 }

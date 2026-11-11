@@ -2,8 +2,12 @@ package xyz.critlauncher.app
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.webkit.JavascriptInterface
@@ -42,6 +46,21 @@ class MainActivity : Activity() {
         fun finishApp() {
             runOnUiThread { finish() }
         }
+
+        /** Opens the game screen (own process) for the launch described in [specPath] (JSON). */
+        fun startGame(specPath: String, logPath: String) {
+            runOnUiThread {
+                startActivity(
+                    Intent(this@MainActivity, GameActivity::class.java)
+                        .putExtra(GameActivity.EXTRA_SPEC, specPath)
+                        .putExtra(GameActivity.EXTRA_LOG, logPath)
+                )
+            }
+        }
+
+        fun stopGame() {
+            sendBroadcast(Intent(GameActivity.ACTION_STOP).setPackage(packageName))
+        }
     }
 
     /** The only object the page can reach: it forwards one call to Python. */
@@ -63,9 +82,30 @@ class MainActivity : Activity() {
         }
     }
 
+    /** The game runs in another process; it tells us when the JVM ended. */
+    private val gameExitReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val code = intent.getIntExtra(GameActivity.EXTRA_CODE, 1)
+            pool.execute {
+                try {
+                    Python.getInstance().getModule("crit_launcher.android.entry").callAttr("game_exited", code)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "game_exited failed", e)
+                }
+            }
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val exitFilter = IntentFilter(GameActivity.ACTION_EXIT)
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(gameExitReceiver, exitFilter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(gameExitReceiver, exitFilter)
+        }
         webView = WebView(this).apply {
             setBackgroundColor(0xFF0B0C0E.toInt())
             settings.apply {
@@ -142,6 +182,10 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        try {
+            unregisterReceiver(gameExitReceiver)
+        } catch (_: Throwable) {
+        }
         try {
             if (Python.isStarted()) {
                 Python.getInstance().getModule("crit_launcher.android.entry").callAttr("shutdown")

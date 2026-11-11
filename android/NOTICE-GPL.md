@@ -6,6 +6,8 @@ patches, renderers), which is licensed under the **GNU GPL v3**. A distributed A
 it is therefore a combined work and must be offered under GPLv3 too, with source available.
 
 * Pinned upstream commit: see `engine/ZALITH_PIN`.
-* Upstream code is fetched at build time and is not copied into this repository, except for any file that
-  keeps its original GPL header.
+* Upstream code is fetched at build time and is not copied into this repository, except for these small
+  Java bridge classes, which keep their original GPL headers: `ZLBridge`, `LoggerBridge`, `NativeLibraryLoader`,
+  `CriticalNativeTest`, `VMLauncher`, `GraphicOutputListener` (under `android/app/src/main/java`).
+  `CallbackBridge` and `ZLNativeInvoker` there are slimmed re-implementations with the same names/signatures.
 * The MIT parts of Crit stay MIT when used on their own (desktop builds are unaffected).
