@@ -84,9 +84,17 @@ val syncCritResources = tasks.register<Sync>("syncCritResources") {
     from(File(repoRoot, "assets")) { into("assets") }
     into(layout.projectDirectory.dir("src/main/assets/crit_res"))
 }
+// Gradle 8 refuses a task that reads another task's output without a declared link, so wire it explicitly.
 tasks.configureEach {
+    val isSync = name == syncCritSources.name || name == syncCritResources.name
     if (name == "preBuild") {
         dependsOn(syncCritSources, syncCritResources)
+    } else if (!isSync) {
+        if (Regex("merge.*(PythonSources|Assets)").matches(name)) {
+            dependsOn(syncCritSources, syncCritResources)
+        } else {
+            mustRunAfter(syncCritSources, syncCritResources)
+        }
     }
 }
 
