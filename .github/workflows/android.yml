@@ -7,11 +7,30 @@ on:
   workflow_dispatch:
 
 jobs:
+  # The engine (Zalith build) only changes when the pin or the extract script changes, so its extracted
+  # result is cached under a key made from those files. The engine job runs only on a cache miss.
+  engine-cache:
+    runs-on: ubuntu-latest
+    outputs:
+      hit: ${{ steps.lookup.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: lookup
+        uses: actions/cache/restore@v4
+        with:
+          path: engine-cache-probe
+          key: crit-engine-${{ hashFiles('android/engine/ZALITH_PIN', 'android/engine/extract-engine.sh', '.github/workflows/android-engine.yml') }}
+          lookup-only: true
+          enableCrossOsArchive: false
+
   engine:
+    needs: engine-cache
+    if: needs.engine-cache.outputs.hit != 'true'
     uses: ./.github/workflows/android-engine.yml
 
   build:
-    needs: engine
+    needs: [engine-cache, engine]
+    if: ${{ !cancelled() && needs.engine-cache.result == 'success' && (needs.engine.result == 'success' || needs.engine.result == 'skipped') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write   # to publish each build as a GitHub Release
@@ -35,16 +54,39 @@ jobs:
       - name: Run backend tests
         run: python -m unittest discover -s tests
 
+      - name: Restore the cached launch engine
+        id: engine
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            android/app/src/main/jniLibs
+            android/app/src/main/assets/engine
+          key: crit-engine-${{ hashFiles('android/engine/ZALITH_PIN', 'android/engine/extract-engine.sh', '.github/workflows/android-engine.yml') }}
+
       - uses: actions/download-artifact@v4
+        if: steps.engine.outputs.cache-hit != 'true'
         with:
           pattern: zalith-engine-*
           path: engine-apks
 
       - name: Unpack the launch engine into the app
+        if: steps.engine.outputs.cache-hit != 'true'
         run: |
           ls -laR engine-apks
           bash android/engine/extract-engine.sh engine-apks/*/*.apk
           du -sh android/app/src/main/jniLibs android/app/src/main/assets/engine
+
+      - name: Save the launch engine to the cache
+        if: steps.engine.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            android/app/src/main/jniLibs
+            android/app/src/main/assets/engine
+          key: crit-engine-${{ hashFiles('android/engine/ZALITH_PIN', 'android/engine/extract-engine.sh', '.github/workflows/android-engine.yml') }}
+
+      - name: Show the launch engine
+        run: du -sh android/app/src/main/jniLibs android/app/src/main/assets/engine
 
       # One persistent key signs every build, so each APK installs over the previous one without uninstalling.
       # It is created on the first run and kept in the Actions cache (not in the repo). To make it permanent, add
