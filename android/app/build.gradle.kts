@@ -34,7 +34,7 @@ android {
 
 chaquopy {
     defaultConfig {
-        version = "3.12"
+        version = "3.11"
         buildPython("python3")
         pip {
             install("Pillow")

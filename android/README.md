@@ -6,7 +6,7 @@ A Kotlin WebView shell (`app/`) that runs the existing Python backend in-process
 
 * ABIs: `armeabi-v7a` and `arm64-v8a` (one APK holds both).
 * Build: pushes to `main` build a debug APK in GitHub Actions (artifact `crit-launcher-android-debug`).
-  Locally: `cd android && gradle assembleDebug` (JDK 17, Android SDK, Python 3.12 on PATH).
+  Locally: `cd android && gradle assembleDebug` (JDK 17, Android SDK, Python 3.11 on PATH).
 
 ## Launch engine (in progress)
 Minecraft launching reuses the ZalithLauncher2 engine (GPLv3, see `NOTICE-GPL.md`). It needs a newer toolchain
