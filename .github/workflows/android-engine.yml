@@ -1,0 +1,71 @@
+name: Android engine (Zalith)
+
+# Builds the ZalithLauncher2 launch engine (JRE runtimes, native bridges, LWJGL, renderers)
+# at the pinned commit in android/engine/ZALITH_PIN, using upstream's own toolchain.
+# Crit's app consumes the result via android/engine/extract-engine.sh.
+# ZalithLauncher2 is GPLv3: see android/NOTICE-GPL.md.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - android/engine/**
+      - .github/workflows/android-engine.yml
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm, arm64]   # armeabi-v7a, arm64-v8a
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch ZalithLauncher2 at the pinned commit
+        run: |
+          pin=$(cat android/engine/ZALITH_PIN)
+          git clone --recurse-submodules https://github.com/ZalithLauncher/ZalithLauncher2.git zalith
+          git -C zalith checkout "$pin"
+          git -C zalith submodule update --init --recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          add-job-summary: on-failure
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Install cargo-ndk
+        run: |
+          version="4.1.2"
+          curl -sL "https://github.com/bbqsrc/cargo-ndk/releases/download/v${version}/cargo-ndk-x86_64-unknown-linux-gnu-v${version}.tgz" |
+            tar xz -C "$HOME/.cargo/bin" --strip-components=1
+          chmod +x "$HOME/.cargo/bin"/cargo-ndk*
+
+      - name: Setup Android NDK
+        run: |
+          ndk=$(ls -d "$ANDROID_HOME"/ndk/* 2>/dev/null | sort -V | tail -1)
+          if [ -z "$ndk" ] || [ ! -f "$ndk/source.properties" ]; then
+            sdkmanager --install "ndk;27.0.12077973"
+            ndk=$(ls -d "$ANDROID_HOME"/ndk/* | sort -V | tail -1)
+          fi
+          echo "ANDROID_NDK_HOME=$ndk" >> "$GITHUB_ENV"
+
+      - name: Build engine APK (${{ matrix.arch }})
+        working-directory: zalith
+        run: |
+          chmod +x gradlew
+          ./gradlew ZalithLauncher:assembleDebug -Darch=${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zalith-engine-${{ matrix.arch }}
+          path: zalith/ZalithLauncher/build/outputs/apk/debug/*.apk
