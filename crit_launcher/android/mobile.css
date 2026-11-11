@@ -1,0 +1,87 @@
+/* Crit Launcher mobile layer (Android only). Keeps the Crit look; changes layout for touch + small screens. */
+html.crit-android, html.crit-android body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+html.crit-android body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+html.crit-android input, html.crit-android textarea, html.crit-android [contenteditable],
+html.crit-android .selectable, html.crit-android pre { user-select: text; -webkit-user-select: text; }
+
+/* desktop-only chrome */
+html.crit-android .win-ctrls, html.crit-android #sidebar-stats, html.crit-android .style-tag,
+html.crit-android #mr-back, html.crit-android #mr-fwd { display: none !important; }
+html.crit-android #tip, html.crit-android .tip { display: none !important; }
+
+/* touch targets */
+html.crit-android .btn, html.crit-android button.nav-item, html.crit-android .mr-nav-btn { min-height: 44px; }
+html.crit-android input, html.crit-android select, html.crit-android textarea { font-size: 16px; }
+html.crit-android #app { height: 100vh; height: 100dvh; }
+html.crit-android #content { padding: 14px; -webkit-overflow-scrolling: touch; }
+html.crit-android #topbar { height: 54px; padding: 0 12px; }
+html.crit-android .chip-txt { display: none; }
+html.crit-android .top-right { gap: 8px; top: 0; }
+
+/* portrait: sidebar becomes a bottom tab bar */
+@media (orientation: portrait) {
+  html.crit-android #app { flex-direction: column; overflow: hidden; }
+  html.crit-android #main { order: 1; min-height: 0; flex: 1 1 0; }
+  html.crit-android #content { min-height: 0; }
+  html.crit-android #sidebar { order: 2; flex: none; }
+  html.crit-android #sidebar, html.crit-android body.compact #sidebar {
+    width: 100%; height: auto; border-right: 0; border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html.crit-android #sidebar-inner {
+    flex-direction: row; align-items: center; padding: 4px 6px; height: auto;
+    overflow-x: auto; overflow-y: hidden; gap: 2px; scrollbar-width: none;
+  }
+  html.crit-android #sidebar-inner::-webkit-scrollbar { display: none; }
+  html.crit-android #brand, html.crit-android #skl-avatar, html.crit-android .skl-sep,
+  html.crit-android #mr-side-extra, html.crit-android .sidebar-account-sep { display: none !important; }
+  html.crit-android #nav, html.crit-android #nav-bottom { display: flex; flex-direction: row; gap: 2px; flex: none; }
+  html.crit-android #sidebar-launch { margin: 0; padding: 0; display: flex; flex: none; }
+  html.crit-android .nav-item {
+    flex-direction: column; justify-content: center; gap: 2px; min-width: 60px; padding: 6px 4px; border-radius: 12px;
+  }
+  html.crit-android .nav-item::before { display: none; }
+  html.crit-android .nav-item .nav-label {
+    display: block; max-width: none; opacity: 1; margin: 0; font-size: 10.5px; line-height: 1.1;
+  }
+  html.crit-android .nav-item .ico svg { width: 22px; height: 22px; }
+  /* install/launch progress floats above the tab bar */
+  html.crit-android #sidebar-progress {
+    position: absolute; left: 10px; right: 10px; bottom: calc(100% + 8px); margin: 0;
+    padding: 8px 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border);
+    z-index: 20; box-shadow: 0 10px 30px -10px rgba(0,0,0,.6);
+  }
+  html.crit-android #sidebar-progress.show { max-height: 80px; margin: 0; }
+  html.crit-android #sidebar-progress .sp-text { display: block; }
+  html.crit-android #save-bar { bottom: 10px; }
+  html.crit-android #save-bar .sb-inner { width: calc(100% - 24px); }
+  /* home fits one screen: changelog scrolls, LAUNCH stays visible */
+  html.crit-android #page-home.active { height: 100%; min-height: 0; max-width: none; }
+  html.crit-android .home-grid { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); flex: 1 1 0; }
+  html.crit-android .home-news { min-height: 0; padding: 14px 6px 14px 16px; }
+  html.crit-android .home-left { gap: 8px; }
+  html.crit-android .home-dock { padding-top: 10px; }
+  /* toolbars wrap instead of running off-screen */
+  html.crit-android .page-head { flex-wrap: wrap; gap: 10px; }
+  html.crit-android .head-actions { flex-shrink: 1; flex-wrap: wrap; }
+  html.crit-android .page-head > #shots-inst-select { width: 100% !important; flex-shrink: 1 !important; }
+  html.crit-android .addons-filterbar, html.crit-android .addons-toolbar { max-width: 100%; }
+  html.crit-android .addons-filterbar { flex-wrap: wrap; justify-content: flex-start; }
+  html.crit-android .addons-filtergroup { flex-wrap: wrap; width: 100%; }
+  html.crit-android .addons-filtergroup > * { min-width: 0; max-width: 100%; }
+  html.crit-android .addons-filtergroup .cselect { width: 100%; flex-shrink: 1; }
+  html.crit-android .cv-bar, html.crit-android .skin-bar { flex-wrap: wrap; }
+  html.crit-android .form-grid, html.crit-android .form-grid.cols3 { grid-template-columns: 1fr; }
+  html.crit-android .modal, html.crit-android .accounts-modal, html.crit-android .settings-modal {
+    max-width: 100vw; max-height: 92dvh; border-radius: 18px;
+  }
+}
+
+/* landscape phones: keep the compact left rail but tighten it */
+@media (orientation: landscape) and (max-height: 520px) {
+  html.crit-android #topbar { height: 46px; }
+  html.crit-android #content { padding: 10px 14px; }
+  html.crit-android #sidebar-inner { padding: 8px 6px 0; }
+  html.crit-android #brand { padding-bottom: 8px; }
+  html.crit-android .nav-item { min-height: 40px; }
+}

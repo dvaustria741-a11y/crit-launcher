@@ -26,10 +26,11 @@
     api[name] = function () { return call(name, Array.prototype.slice.call(arguments)); };
   });
   window.pywebview = { api: api };
-  // The desktop layout needs about 900 CSS px; scale down on narrower screens.
+  // Mobile layout: real device width, no pinch-zoom (the UI is responsive; see mobile.css).
+  document.documentElement.classList.add("crit-android");
   var meta = document.querySelector('meta[name="viewport"]');
   if (!meta) { meta = document.createElement("meta"); meta.name = "viewport"; document.head.appendChild(meta); }
-  meta.content = (screen.width < 900 ? "width=900" : "width=device-width") + ", initial-scale=1, viewport-fit=cover";
+  meta.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no";
   window.addEventListener("load", function () {
     window.dispatchEvent(new Event("pywebviewready"));
   });

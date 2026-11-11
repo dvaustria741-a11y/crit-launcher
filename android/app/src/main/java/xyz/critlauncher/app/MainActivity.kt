@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -77,7 +76,6 @@ class MainActivity : Activity() {
                 allowUniversalAccessFromFileURLs = true
                 mediaPlaybackRequiresUserGesture = false
                 useWideViewPort = true
-                loadWithOverviewMode = true
                 mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
             }
             webChromeClient = WebChromeClient()
@@ -92,8 +90,6 @@ class MainActivity : Activity() {
             addJavascriptInterface(PageBridge(), "CritBridge")
         }
         setContentView(webView)
-        hideSystemBars()
-
         pool.execute {
             try {
                 val resDir = File(filesDir, "crit_res")
@@ -138,19 +134,6 @@ class MainActivity : Activity() {
         }
         dest.mkdirs()
         for (name in children) copyAssetDir("$assetPath/$name", File(dest, name))
-    }
-
-    private fun hideSystemBars() {
-        @Suppress("DEPRECATION")
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) hideSystemBars()
     }
 
     @Deprecated("Deprecated in Java")

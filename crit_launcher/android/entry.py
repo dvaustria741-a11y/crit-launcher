@@ -85,11 +85,17 @@ def _inject_bridge(page_path):
         shim = fh.read().replace("__CRIT_METHODS__", json.dumps(_methods))
     with open(page_path, "r", encoding="utf-8", errors="replace") as fh:
         html = fh.read()
+    css_path = os.path.join(os.path.dirname(__file__), "mobile.css")
+    with open(css_path, "r", encoding="utf-8") as fh:
+        css = fh.read()
     tag = "<script>" + shim + "</script>"
     if "<head>" in html:
         html = html.replace("<head>", "<head>" + tag, 1)
     else:
         html = tag + html
+    # after the page's own styles so the mobile rules win
+    style = '<style id="crit-mobile">' + css + "</style>"
+    html = html.replace("</head>", style + "</head>", 1) if "</head>" in html else html + style
     out = page_path + ".android.html"
     with open(out, "w", encoding="utf-8", newline="") as fh:
         fh.write(html)
